@@ -1,11 +1,14 @@
-import { LitElement, html, css } from 'lit';
+/* eslint-disable class-methods-use-this */
+import { LitElement, html, css } from "lit";
 
-const logo = new URL('../assets/open-wc-logo.svg', import.meta.url).href;
+// const logo = new URL("../assets/open-wc-logo.svg", import.meta.url).href;
+
+let ws;
 
 export class LanCam extends LitElement {
   static get properties() {
     return {
-      title: { type: String },
+      text: { type: String },
     };
   }
 
@@ -56,35 +59,57 @@ export class LanCam extends LitElement {
 
   constructor() {
     super();
-    this.title = 'My app';
+    this.text = "";
+
+    this.startWS();
+    this.getMedia();
+  }
+
+  startWS() {
+    // ws = new WebSocket("ws://localhost:8000");
+    // ws = new WebSocket("ws://0.0.0.0:8080");
+    ws = new WebSocket("ws://192.168.1.35:8080");
+
+    ws.onopen = function (event) {
+      ws.send("Here's some text that the server is urgently awaiting!");
+    };
+    console.log("ws:", ws);
+    ws.onmessage = function (event) {
+      console.log("ws message:", event.data);
+    };
+
+    return this;
+  }
+
+  echo(e) {
+    const { value } = e.target;
+    ws.send(value);
+    this.text = value;
+  }
+
+  async getMedia() {
+    let stream = null;
+    const constraints = {
+      video: true,
+      audio: false,
+    };
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log("stream:", stream);
+      /* use the stream */
+    } catch (err) {
+      console.error("failed to get media access: ", err);
+      /* handle the error */
+    }
   }
 
   render() {
     return html`
-      <main>
-        <div class="logo"><img alt="open-wc logo" src=${logo} /></div>
-        <h1>${this.title}</h1>
+      <input @input=${this.echo} />
 
-        <p>Edit <code>src/LanCam.js</code> and save to reload.</p>
-        <a
-          class="app-link"
-          href="https://open-wc.org/guides/developing-components/code-examples/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Code examples
-        </a>
-      </main>
-
-      <p class="app-footer">
-        🚽 Made with love by
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://github.com/open-wc"
-          >open-wc</a
-        >.
-      </p>
+      <button @click=${this.echo}>hi</button>
+      <a href="https://pwa-webrtc-16283.firebaseapp.com/">aaaaaa</a>
     `;
   }
 }

@@ -15,7 +15,10 @@
     "start": "web-dev-server"
   },
   "dependencies": {
-    "lit": "^2.0.2"
+    "express": "^4.17.1",
+    "lit": "^2.0.2",
+    "websocket": "^1.0.34",
+    "ws": "^8.2.3"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.8",
@@ -48,7 +51,6 @@
     ]
   },
   "prettier": {
-    "singleQuote": true,
     "arrowParens": "avoid"
   },
   "husky": {
