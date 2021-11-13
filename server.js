@@ -2,24 +2,17 @@ const WebSocket = require("ws");
 const WebSocketServer = require("ws").Server;
 
 const express = require("express");
+const fs = require("fs");
+const https = require("https");
+const path = require("path");
+
+const options = {
+  key: fs.readFileSync("./cert/localhost-key.pem"),
+  cert: fs.readFileSync("./cert/localhost.pem"),
+};
 
 const app = express();
 const port = 3000;
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-  // res.redirect("http://localhost:8000");
-});
-
-// const wss = new WebSocketServer({ server: app, path: "/ws" });
-
-// wss.on("connection", function connection(ws) {
-//   ws.on("message", function message(data) {
-//     console.log("received: %s", data);
-//   });
-
-//   ws.send("something");
-// });
 
 const wss = new WebSocketServer({ port: 8080 });
 
@@ -40,7 +33,7 @@ wss.on("connection", (ws, req) => {
     // ws.send(data);
   });
 
-  ws.send("something");
+  // ws.send("something");
 });
 
 function getIP() {}
@@ -48,3 +41,20 @@ function getIP() {}
 // app.listen(port, () => {
 //   console.log(`Example app listening at http://localhost:${port}`);
 // });
+
+app.enable("trust proxy");
+app.use((req, res, next) => {
+  console.log("req.secure: ", req.secure);
+  req.secure ? next() : res.redirect("https://" + req.headers.host + req.url);
+});
+
+app.use(express.static(path.join(__dirname, "dist")));
+
+// app.get("/", (req, res) => {
+//   res.send("Hello World!");
+// });
+
+const httpsServer = https.createServer(options, app);
+httpsServer.listen(port, () => {
+  console.log(`Example app listening at https://localhost:${port}`);
+});

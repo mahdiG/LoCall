@@ -4,12 +4,214 @@ import { LitElement, html, css } from "lit";
 // const logo = new URL("../assets/open-wc-logo.svg", import.meta.url).href;
 
 let ws;
+let pc;
+let localStream;
 
 export class LanCam extends LitElement {
   static get properties() {
     return {
       text: { type: String },
     };
+  }
+
+  constructor() {
+    super();
+    this.text = "";
+
+    this.startWS();
+  }
+
+  firstUpdated() {
+    super.firstUpdated();
+    this.getMedia();
+  }
+
+  wsSend(object) {
+    ws.send(JSON.stringify(object));
+  }
+
+  wsGet() {
+    ws.onmessage = event => {
+      console.log("event.data:", event.data);
+      const parsed = JSON.parse(event.data);
+      if (event.data) {
+        console.log("parsed: ", parsed);
+      }
+      // our call has been answered
+      if (parsed.answer) {
+        this.setRemoteDescription(parsed.answer);
+      }
+      // we're offered a call and now we answer it :)
+      if (parsed.offer) {
+        this.answer(parsed.offer);
+      }
+      if (parsed.newIceCandidate) {
+        this.addIceCandidate(parsed.newIceCandidate);
+      }
+    };
+  }
+
+  startWS() {
+    // ws = new WebSocket("ws://localhost:8000");
+    // ws = new WebSocket("ws://0.0.0.0:8080");
+    ws = new WebSocket("ws://192.168.1.35:8080");
+
+    ws.onopen = event => {
+      // ws.send("Hi I'm client and I just connected");
+      this.wsSend({ msg: "toast" });
+    };
+    console.log("ws:", ws);
+    // ws.onmessage = function (event) {
+    //   console.log("ws message:", event.data);
+    // };
+    this.wsGet();
+
+    return this;
+  }
+
+  echo(e) {
+    const { value } = e.target;
+    this.wsSend({ msg: value });
+    this.text = value;
+  }
+
+  async getMedia() {
+    const constraints = {
+      video: {
+        deviceId: this.videoSource ? { exact: this.videoSource } : undefined,
+      },
+      audio: false,
+    };
+
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia(constraints);
+      // const devices = await navigator.mediaDevices.enumerateDevices();
+      // console.log("devices:", devices);
+
+      console.log("localStream:", localStream);
+      /* use the localStream */
+      this.showLocalCamera(localStream);
+    } catch (err) {
+      console.error("failed to get media access: ", err);
+      /* handle the error */
+    }
+  }
+
+  showLocalCamera(mediaStream) {
+    const video = this.shadowRoot.querySelector("#local-video");
+    console.log("video:", video);
+    video.srcObject = mediaStream;
+    video.onloadedmetadata = function (e) {
+      video.play();
+    };
+  }
+
+  addLocalStreamToPC() {
+    localStream.getTracks().forEach(track => {
+      pc.addTrack(track, localStream);
+    });
+  }
+
+  addRemoteStreamToVideo() {
+    const remoteStream = new MediaStream();
+    const remoteVideo = this.shadowRoot.querySelector("#remote-video");
+    remoteVideo.srcObject = remoteStream;
+
+    pc.addEventListener("track", async event => {
+      remoteStream.addTrack(event.track, remoteStream);
+    });
+  }
+
+  async makeCall() {
+    console.log("making call");
+    const configuration = {};
+    pc = new RTCPeerConnection(configuration);
+
+    this.addLocalStreamToPC();
+    this.addRemoteStreamToVideo();
+
+    this.onIceCandidate();
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    this.wsSend({ offer });
+  }
+
+  async setRemoteDescription(answer) {
+    console.log("setRemoteDescription");
+    const remoteDesc = new RTCSessionDescription(answer);
+    await pc.setRemoteDescription(remoteDesc);
+  }
+
+  async answer(offer) {
+    console.log("answering");
+    pc = new RTCPeerConnection();
+
+    this.addLocalStreamToPC();
+    this.addRemoteStreamToVideo();
+
+    this.onIceCandidate();
+
+    pc.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    this.wsSend({ answer });
+  }
+
+  onIceCandidate() {
+    console.log("send pc:", pc);
+
+    // Listen for local ICE candidates on the local RTCPeerConnection
+    pc.addEventListener("icecandidate", event => {
+      if (event.candidate) {
+        console.log("sending ice candy");
+        this.wsSend({ newIceCandidate: event.candidate });
+      }
+    });
+
+    console.log("send pc after:", pc);
+
+    // Listen for connectionstatechange on the local RTCPeerConnection
+    pc.addEventListener("connectionstatechange", event => {
+      if (pc.connectionState === "connected") {
+        // Peers connected!
+      }
+    });
+  }
+
+  async addIceCandidate(iceCandidate) {
+    console.log("addIceCandidate: ", iceCandidate);
+    try {
+      await pc.addIceCandidate(iceCandidate);
+    } catch (e) {
+      console.error("Error adding received ice candidate", e);
+    }
+  }
+
+  render() {
+    return html`
+      <input @input=${this.echo} />
+
+      <button @click=${this.echo}>hi</button>
+
+      <button @click=${this.makeCall}>call!!</button>
+
+      <video
+        id="local-video"
+        class="video-local"
+        width="250"
+        height="250"
+        autoplay
+      ></video>
+
+      <video
+        id="remote-video"
+        class="video-local"
+        width="250"
+        height="250"
+        autoplay
+      ></video>
+    `;
   }
 
   static get styles() {
@@ -32,84 +234,10 @@ export class LanCam extends LitElement {
         flex-grow: 1;
       }
 
-      .logo {
-        margin-top: 36px;
-        animation: app-logo-spin infinite 20s linear;
+      .video-local {
+        width: 50rem;
+        height: 50rem;
       }
-
-      @keyframes app-logo-spin {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .app-footer {
-        font-size: calc(12px + 0.5vmin);
-        align-items: center;
-      }
-
-      .app-footer a {
-        margin-left: 5px;
-      }
-    `;
-  }
-
-  constructor() {
-    super();
-    this.text = "";
-
-    this.startWS();
-    this.getMedia();
-  }
-
-  startWS() {
-    // ws = new WebSocket("ws://localhost:8000");
-    // ws = new WebSocket("ws://0.0.0.0:8080");
-    ws = new WebSocket("ws://192.168.1.35:8080");
-
-    ws.onopen = function (event) {
-      ws.send("Here's some text that the server is urgently awaiting!");
-    };
-    console.log("ws:", ws);
-    ws.onmessage = function (event) {
-      console.log("ws message:", event.data);
-    };
-
-    return this;
-  }
-
-  echo(e) {
-    const { value } = e.target;
-    ws.send(value);
-    this.text = value;
-  }
-
-  async getMedia() {
-    let stream = null;
-    const constraints = {
-      video: true,
-      audio: false,
-    };
-
-    try {
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log("stream:", stream);
-      /* use the stream */
-    } catch (err) {
-      console.error("failed to get media access: ", err);
-      /* handle the error */
-    }
-  }
-
-  render() {
-    return html`
-      <input @input=${this.echo} />
-
-      <button @click=${this.echo}>hi</button>
-      <a href="https://pwa-webrtc-16283.firebaseapp.com/">aaaaaa</a>
     `;
   }
 }
