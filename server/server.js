@@ -9,7 +9,7 @@ const makeCert = require("./mkcert.js");
 
 async function createServer() {
   const cert = await makeCert.createCert();
-  console.log("credentials: ");
+  // console.log("credentials: ");
 
   // const options = {
   //   key: fs.readFileSync("../cert/localhost-key.pem"),
@@ -44,8 +44,6 @@ async function createServer() {
 
     // ws.send("something");
   });
-
-  function getIP() {}
 
   // app.listen(port, () => {
   //   console.log(`Example app listening at http://localhost:${port}`);
