@@ -5,18 +5,32 @@ const express = require("express");
 // const fs = require("fs");
 const https = require("https");
 const path = require("path");
-const makeCert = require("./mkcert.js");
+const { createCert } = require("./mkcert.js");
+const { getLocalIP } = require("./getIP.js");
+
+console.log("localIP: ", getLocalIP());
 
 function createWS(httpsServer) {
-  // const wss = new WebSocketServer({ port: 8080 });
-  const wss = new WebSocketServer({ server: httpsServer });
+  console.log("nodeenv: ", process.env.NODE_ENV);
+
+  const isDev = process.env.NODE_ENV === "dev";
+
+  let wss = new WebSocketServer({ port: 8080 });
+  if (!isDev) {
+    wss = new WebSocketServer({ server: httpsServer });
+  }
   // const wss = new WebSocket({ server: httpsServer });
+
+  // eslint-disable-next-line no-unused-vars
   wss.on("connection", (ws, req) => {
-    const ip = req.socket.remoteAddress;
-    console.log("ip:", ip);
+    // const ip = req.socket.remoteAddress;
+    // console.log("ip:", ip);
 
     ws.on("message", (data, isBinary) => {
       console.log("received: %s", data);
+
+      // send server ip to client
+      ws.send(JSON.stringify({ ip: getLocalIP() }));
 
       wss.clients.forEach(client => {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -33,7 +47,7 @@ function createWS(httpsServer) {
 }
 
 async function createServer() {
-  const cert = await makeCert.createCert();
+  const cert = await createCert();
   // console.log("credentials: ");
 
   // const options = {

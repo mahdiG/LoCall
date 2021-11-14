@@ -12,7 +12,8 @@
     "build": "rimraf dist && rollup -c rollup.config.js && npm run analyze -- --exclude dist",
     "start:build": "web-dev-server --root-dir dist --app-index index.html --open",
     "analyze": "cem analyze --litelement",
-    "start": "web-dev-server"
+    "start": "web-dev-server",
+    "server": "NODE_ENV=dev node server/server.js"
   },
   "dependencies": {
     "express": "^4.17.1",

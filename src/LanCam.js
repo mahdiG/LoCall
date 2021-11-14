@@ -11,6 +11,7 @@ export class LanCam extends LitElement {
   static get properties() {
     return {
       text: { type: String },
+      serverIP: { type: String },
     };
   }
 
@@ -48,24 +49,27 @@ export class LanCam extends LitElement {
       if (parsed.newIceCandidate) {
         this.addIceCandidate(parsed.newIceCandidate);
       }
+      if (parsed.ip) {
+        console.log("ip: ", parsed.ip);
+        this.serverIP = parsed.ip;
+      }
     };
   }
 
   startWS() {
     // ws = new WebSocket("ws://localhost:8000");
     // ws = new WebSocket("ws://0.0.0.0:8080");
-    console.log("location:", window.location);
     const { host, hostname, port } = window.location;
 
     let wsUrl = `wss://${host}`;
 
     // ws port is 3000 but in dev server, location port is 8000
     // this is only for dev env purposes
-    if (port !== "3000") {
-      wsUrl = `wss://${hostname}:3000`;
-      ws = new WebSocket(wsUrl);
+    const isDev = port !== "3000";
+    if (isDev) {
+      // wsUrl = `wss://${hostname}:3000`;
+      wsUrl = `ws://${hostname}:8080`;
     }
-
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -207,6 +211,9 @@ export class LanCam extends LitElement {
       <button @click=${this.echo}>hi</button>
 
       <button @click=${this.makeCall}>call!!</button>
+
+      <h3>Open this in chrome on your phone :</h3>
+      <h2>${this.serverIP}:3000</h2>
 
       <video
         id="local-video"
