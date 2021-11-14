@@ -54,9 +54,9 @@ export class LanCam extends LitElement {
   startWS() {
     // ws = new WebSocket("ws://localhost:8000");
     // ws = new WebSocket("ws://0.0.0.0:8080");
-    ws = new WebSocket("ws://192.168.1.35:8080");
+    ws = new WebSocket("wss://192.168.1.34:3000");
 
-    ws.onopen = event => {
+    ws.onopen = () => {
       // ws.send("Hi I'm client and I just connected");
       this.wsSend({ msg: "toast" });
     };
@@ -101,7 +101,7 @@ export class LanCam extends LitElement {
     const video = this.shadowRoot.querySelector("#local-video");
     console.log("video:", video);
     video.srcObject = mediaStream;
-    video.onloadedmetadata = function (e) {
+    video.onloadedmetadata = () => {
       video.play();
     };
   }
@@ -172,7 +172,7 @@ export class LanCam extends LitElement {
     console.log("send pc after:", pc);
 
     // Listen for connectionstatechange on the local RTCPeerConnection
-    pc.addEventListener("connectionstatechange", event => {
+    pc.addEventListener("connectionstatechange", () => {
       if (pc.connectionState === "connected") {
         // Peers connected!
       }
