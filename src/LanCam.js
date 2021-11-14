@@ -54,7 +54,19 @@ export class LanCam extends LitElement {
   startWS() {
     // ws = new WebSocket("ws://localhost:8000");
     // ws = new WebSocket("ws://0.0.0.0:8080");
-    ws = new WebSocket("wss://192.168.1.34:3000");
+    console.log("location:", window.location);
+    const { host, hostname, port } = window.location;
+
+    let wsUrl = `wss://${host}`;
+
+    // ws port is 3000 but in dev server, location port is 8000
+    // this is only for dev env purposes
+    if (port !== "3000") {
+      wsUrl = `wss://${hostname}:3000`;
+      ws = new WebSocket(wsUrl);
+    }
+
+    ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       // ws.send("Hi I'm client and I just connected");
