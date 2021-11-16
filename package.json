@@ -13,7 +13,8 @@
     "start:build": "web-dev-server --root-dir dist --app-index index.html --open",
     "analyze": "cem analyze --litelement",
     "start": "web-dev-server",
-    "server": "NODE_ENV=dev node server/server.js"
+    "server": "NODE_ENV=dev node server/server.js",
+    "server:prod": "NODE_ENV=prod node server/server.js"
   },
   "dependencies": {
     "express": "^4.17.1",

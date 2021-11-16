@@ -2,6 +2,8 @@
 import { LitElement, html, css } from "lit";
 
 // const logo = new URL("../assets/open-wc-logo.svg", import.meta.url).href;
+const switchIcon = new URL("../assets/switch-icon.svg", import.meta.url).href;
+const cameraIcon = new URL("../assets/camera-icon.svg", import.meta.url).href;
 
 let ws;
 let pc;
@@ -12,12 +14,16 @@ export class LanCam extends LitElement {
     return {
       text: { type: String },
       serverIP: { type: String },
+      isInCalling: {
+        type: Boolean,
+      },
     };
   }
 
   constructor() {
     super();
     this.text = "";
+    this.isInCalling = false;
 
     this.startWS();
   }
@@ -93,9 +99,7 @@ export class LanCam extends LitElement {
 
   async getMedia() {
     const constraints = {
-      video: {
-        deviceId: this.videoSource ? { exact: this.videoSource } : undefined,
-      },
+      video: true,
       audio: false,
     };
 
@@ -115,7 +119,12 @@ export class LanCam extends LitElement {
 
   showLocalCamera(mediaStream) {
     const video = this.shadowRoot.querySelector("#local-video");
-    console.log("video:", video);
+    console.log("mediaStream:", mediaStream);
+    console.log("mediaStream.getTracks():", mediaStream.getTracks());
+    console.log(
+      "mediaStream.getTracks()[0].getSettings():",
+      mediaStream.getTracks()[0].getSettings()
+    );
     video.srcObject = mediaStream;
     video.onloadedmetadata = () => {
       video.play();
@@ -134,6 +143,7 @@ export class LanCam extends LitElement {
     remoteVideo.srcObject = remoteStream;
 
     pc.addEventListener("track", async event => {
+      console.log("pc track event: ", event);
       remoteStream.addTrack(event.track, remoteStream);
     });
   }
@@ -204,32 +214,86 @@ export class LanCam extends LitElement {
     }
   }
 
-  render() {
+  renderShowIP() {
     return html`
-      <input @input=${this.echo} />
-
-      <button @click=${this.echo}>hi</button>
-
-      <button @click=${this.makeCall}>call!!</button>
-
       <h3>Open this in chrome on your phone :</h3>
       <h2>${this.serverIP}:3000</h2>
+    `;
+  }
 
-      <video
-        id="local-video"
-        class="video-local"
-        width="250"
-        height="250"
-        autoplay
-      ></video>
+  async getConnectedDevices(type) {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.filter(device => device.kind === type);
+  }
 
-      <video
-        id="remote-video"
-        class="video-local"
-        width="250"
-        height="250"
-        autoplay
-      ></video>
+  async switchCamera() {
+    console.log("switching camera");
+    const videoCameras = await this.getConnectedDevices("videoinput");
+    console.log("Cameras found:", videoCameras);
+
+    const currentCamId = localStream.getTracks()[0].getSettings().deviceId;
+    console.log("currentcam: ", currentCamId);
+
+    const newCam = videoCameras.find(cam => cam.deviceId !== currentCamId);
+    console.log("newCam: ", newCam);
+
+    localStream = await this.openCamera(newCam.deviceId);
+    this.showLocalCamera(localStream);
+    this.addLocalStreamToPC();
+    this.changeSenderTrack(localStream);
+  }
+
+  changeSenderTrack(stream) {
+    const videoTrack = stream.getVideoTracks()[0];
+    const sender = pc.getSenders().find(s => s.track.kind == videoTrack.kind);
+    console.log("found sender:", sender);
+    sender.replaceTrack(videoTrack);
+  }
+
+  openCamera(cameraId) {
+    const constraints = {
+      audio: false,
+      video: {
+        deviceId: cameraId || undefined,
+      },
+    };
+
+    return navigator.mediaDevices.getUserMedia(constraints);
+  }
+
+  render() {
+    return html`
+      <div class="background">
+        <!-- <input @input=${this.echo} />
+
+        <button @click=${this.echo}>hi</button>
+
+        <button @click=${this.makeCall}>call!!</button> -->
+
+        <!-- ${this.renderShowIP()} -->
+
+        <button class="switch-camera-button" @click=${this.switchCamera}>
+          switch
+        </button>
+
+        <button class="call-camera-button" @click=${this.makeCall}>call</button>
+
+        <video
+          id="local-video"
+          class="video video-local"
+          autoplay
+          playsinline
+          ?controls=${false}
+        ></video>
+
+        <video
+          id="remote-video"
+          class="video"
+          autoplay
+          playsinline
+          ?controls=${false}
+        ></video>
+      </div>
     `;
   }
 
@@ -249,13 +313,36 @@ export class LanCam extends LitElement {
         background-color: var(--lan-cam-background-color);
       }
 
-      main {
+      .background {
+        position: relative;
+        display: flex;
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        justify-content: center;
+        align-items: flex-end;
+      }
+
+      .video {
         flex-grow: 1;
+        width: 100%;
+        height: 100%;
       }
 
       .video-local {
-        width: 50rem;
-        height: 50rem;
+        width: 4rem;
+        height: 4rem;
+      }
+
+      .switch-camera-button {
+        width: 5rem;
+        height: 5rem;
+        border-radius: 100%;
+        position: absolute;
+        margin-bottom: 2rem;
+        border: none;
+        cursor: pointer;
+        z-index: 2;
       }
     `;
   }
