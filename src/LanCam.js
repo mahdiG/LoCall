@@ -8,6 +8,20 @@ const cameraIcon = new URL("../assets/camera-icon.svg", import.meta.url).href;
 let ws;
 let pc;
 let localStream;
+// let constraints = {
+//   audio: false,
+//   video: {
+//     width: { ideal: 1920 },
+//     height: { ideal: 1080 },
+//   },
+// };
+let constraints = {
+  audio: false,
+  video: {
+    width: { min: 1920 },
+    height: { min: 1080 },
+  },
+};
 
 export class LanCam extends LitElement {
   static get properties() {
@@ -98,11 +112,6 @@ export class LanCam extends LitElement {
   }
 
   async getMedia() {
-    const constraints = {
-      video: true,
-      audio: false,
-    };
-
     try {
       localStream = await navigator.mediaDevices.getUserMedia(constraints);
       // const devices = await navigator.mediaDevices.enumerateDevices();
@@ -125,6 +134,7 @@ export class LanCam extends LitElement {
       "mediaStream.getTracks()[0].getSettings():",
       mediaStream.getTracks()[0].getSettings()
     );
+    this.wsSend({ OTHER_CAMERA: mediaStream.getTracks()[0].getSettings() });
     video.srcObject = mediaStream;
     video.onloadedmetadata = () => {
       video.play();
@@ -231,7 +241,9 @@ export class LanCam extends LitElement {
     const videoCameras = await this.getConnectedDevices("videoinput");
     console.log("Cameras found:", videoCameras);
 
-    const currentCamId = localStream.getTracks()[0].getSettings().deviceId;
+    const streamSettings = localStream.getTracks()[0].getSettings();
+
+    const currentCamId = streamSettings.deviceId;
     console.log("currentcam: ", currentCamId);
 
     const newCam = videoCameras.find(cam => cam.deviceId !== currentCamId);
@@ -241,6 +253,8 @@ export class LanCam extends LitElement {
     this.showLocalCamera(localStream);
     this.addLocalStreamToPC();
     this.changeSenderTrack(localStream);
+
+    this.wsSend({ cam: streamSettings });
   }
 
   changeSenderTrack(stream) {
@@ -251,9 +265,10 @@ export class LanCam extends LitElement {
   }
 
   openCamera(cameraId) {
-    const constraints = {
-      audio: false,
+    constraints = {
+      ...constraints,
       video: {
+        ...constraints.video,
         deviceId: cameraId || undefined,
       },
     };
