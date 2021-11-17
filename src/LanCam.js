@@ -1,5 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import { LitElement, html, css } from "lit";
+import "./flip-camera-icon.js";
 
 // const logo = new URL("../assets/open-wc-logo.svg", import.meta.url).href;
 const switchIcon = new URL("../assets/switch-icon.svg", import.meta.url).href;
@@ -8,43 +9,52 @@ const cameraIcon = new URL("../assets/camera-icon.svg", import.meta.url).href;
 let ws;
 let pc;
 let localStream;
-// let constraints = {
-//   audio: false,
-//   video: {
-//     width: { ideal: 1920 },
-//     height: { ideal: 1080 },
-//   },
-// };
 let constraints = {
   audio: false,
   video: {
-    width: { min: 1920 },
-    height: { min: 1080 },
+    // width: { ideal: 1920 },
+    // height: { ideal: 1080 },
   },
 };
+
+// let constraints = {
+//   audio: false,
+//   video: {
+//     width: { min: 1920 },
+//     height: { min: 1080 },
+//   },
+// };
 
 export class LanCam extends LitElement {
   static get properties() {
     return {
       text: { type: String },
       serverIP: { type: String },
-      isInCalling: {
-        type: Boolean,
-      },
+      isInCall: { type: Boolean },
+      isDesktop: { type: Boolean },
     };
   }
 
   constructor() {
     super();
     this.text = "";
-    this.isInCalling = false;
+    this.isInCall = false;
+    this.isDesktop = false;
 
+    this.checkIfDesktop();
     this.startWS();
   }
 
   firstUpdated() {
     super.firstUpdated();
     this.getMedia();
+  }
+
+  checkIfDesktop() {
+    const { hostname } = window.location;
+    if (hostname === "localhost") {
+      this.isDesktop = true;
+    }
   }
 
   wsSend(object) {
@@ -113,6 +123,10 @@ export class LanCam extends LitElement {
 
   async getMedia() {
     try {
+      console.log(
+        "navigator.mediaDevices: ",
+        await navigator.mediaDevices.getSupportedConstraints()
+      );
       localStream = await navigator.mediaDevices.getUserMedia(constraints);
       // const devices = await navigator.mediaDevices.enumerateDevices();
       // console.log("devices:", devices);
@@ -276,18 +290,54 @@ export class LanCam extends LitElement {
     return navigator.mediaDevices.getUserMedia(constraints);
   }
 
+  renderLaptop() {
+    return html`
+      <!-- <video
+        id="local-video"
+        class="video video-hide"
+        autoplay
+        playsinline
+        ?controls=${false}
+      ></video> -->
+
+      <video
+        id="remote-video"
+        class="video"
+        autoplay
+        playsinline
+        ?controls=${false}
+      ></video>
+    `;
+  }
+
+  renderMobile() {
+    return html`
+      <video
+        id="local-video"
+        class="video"
+        autoplay
+        playsinline
+        ?controls=${false}
+      ></video>
+
+      <button class="switch-camera-button" @click=${this.switchCamera}>
+        <flip-camera-icon></flip-camera-icon>
+      </button>
+    `;
+  }
+
   render() {
     return html`
       <div class="background">
         <!-- <input @input=${this.echo} />
-
+    
         <button @click=${this.echo}>hi</button>
-
+    
         <button @click=${this.makeCall}>call!!</button> -->
 
         <!-- ${this.renderShowIP()} -->
 
-        <button class="switch-camera-button" @click=${this.switchCamera}>
+        <!-- <button class="switch-camera-button" @click=${this.switchCamera}>
           switch
         </button>
 
@@ -307,7 +357,12 @@ export class LanCam extends LitElement {
           autoplay
           playsinline
           ?controls=${false}
-        ></video>
+        ></video> -->
+
+        <button class="call-camera-button" @click=${this.makeCall}>call</button>
+
+        <!-- ${this.renderLaptop()} -->
+        ${this.renderMobile()}
       </div>
     `;
   }
@@ -343,21 +398,38 @@ export class LanCam extends LitElement {
         width: 100%;
         height: 100%;
       }
-
       .video-local {
         width: 4rem;
         height: 4rem;
       }
+      .video-hide {
+        width: 0;
+        height: 0;
+      }
 
       .switch-camera-button {
-        width: 5rem;
-        height: 5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 2rem;
+        height: 2rem;
         border-radius: 100%;
         position: absolute;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
+        /* right: 1rem; */
         border: none;
         cursor: pointer;
         z-index: 2;
+      }
+      flip-camera-icon {
+        flex-grow: 1;
+        --color: black;
+      }
+
+      .call-camera-button {
+        position: absolute;
+        z-index: 2;
+        left: 0;
       }
     `;
   }
