@@ -26,11 +26,18 @@ function createWS(httpsServer) {
     // const ip = req.socket.remoteAddress;
     // console.log("ip:", ip);
 
+    console.log("someone connected?", wss.clients.size);
+
+    ws.send(JSON.stringify({ ip: getLocalIP() }));
+
+    // if (wss.clients.size === 2) {
+    //   ws.send(JSON.stringify({ msg: "MAKE_CALL" }));
+    // }
+
     ws.on("message", (data, isBinary) => {
       console.log("received: %s", data);
 
       // send server ip to client
-      ws.send(JSON.stringify({ ip: getLocalIP() }));
 
       wss.clients.forEach(client => {
         if (client !== ws && client.readyState === WebSocket.OPEN) {

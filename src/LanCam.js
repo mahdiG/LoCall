@@ -16,6 +16,7 @@ let constraints = {
     // height: { ideal: 1080 },
   },
 };
+let readyToCall = false;
 
 // let constraints = {
 //   audio: false,
@@ -74,7 +75,10 @@ export class LanCam extends LitElement {
       }
       // we're offered a call and now we answer it :)
       if (parsed.offer) {
-        this.answer(parsed.offer);
+        this.isInCall = true;
+        setTimeout(() => {
+          this.answer(parsed.offer);
+        }, 2000);
       }
       if (parsed.newIceCandidate) {
         this.addIceCandidate(parsed.newIceCandidate);
@@ -82,6 +86,13 @@ export class LanCam extends LitElement {
       if (parsed.ip) {
         console.log("ip: ", parsed.ip);
         this.serverIP = parsed.ip;
+      }
+      if (parsed.msg === "MAKE_CALL") {
+        this.isInCall = true;
+        setTimeout(() => {
+          console.log("caaaaaaaaaaaaaaaaaaaaaaaaallll");
+          this.makeCall();
+        }, 2000);
       }
     };
   }
@@ -132,6 +143,7 @@ export class LanCam extends LitElement {
       // console.log("devices:", devices);
 
       console.log("localStream:", localStream);
+      this.wsSend({ msg: "MAKE_CALL" });
       /* use the localStream */
       this.showLocalCamera(localStream);
     } catch (err) {
@@ -174,6 +186,7 @@ export class LanCam extends LitElement {
 
   async makeCall() {
     console.log("making call");
+    this.isInCall = true;
     const configuration = {};
     pc = new RTCPeerConnection(configuration);
 
@@ -195,6 +208,7 @@ export class LanCam extends LitElement {
 
   async answer(offer) {
     console.log("answering");
+    this.isInCall = true;
     pc = new RTCPeerConnection();
 
     this.addLocalStreamToPC();
@@ -236,13 +250,6 @@ export class LanCam extends LitElement {
     } catch (e) {
       console.error("Error adding received ice candidate", e);
     }
-  }
-
-  renderShowIP() {
-    return html`
-      <h3>Open this in chrome on your phone :</h3>
-      <h2>${this.serverIP}:3000</h2>
-    `;
   }
 
   async getConnectedDevices(type) {
@@ -291,14 +298,17 @@ export class LanCam extends LitElement {
   }
 
   renderLaptop() {
+    if (!this.isInCall) {
+      return this.renderShowIP();
+    }
     return html`
-      <!-- <video
+      <video
         id="local-video"
         class="video video-hide"
         autoplay
         playsinline
         ?controls=${false}
-      ></video> -->
+      ></video>
 
       <video
         id="remote-video"
@@ -320,9 +330,33 @@ export class LanCam extends LitElement {
         ?controls=${false}
       ></video>
 
+      <video
+        id="remote-video"
+        class="video video-hide"
+        autoplay
+        playsinline
+        ?controls=${false}
+      ></video>
+
       <button class="switch-camera-button" @click=${this.switchCamera}>
         <flip-camera-icon></flip-camera-icon>
       </button>
+    `;
+  }
+
+  renderShowIP() {
+    return html`
+      <video
+        id="local-video"
+        class="video video-hide"
+        autoplay
+        playsinline
+        ?controls=${false}
+      ></video>
+      <div class="show-ip-container">
+        <h3>Open this in chrome on your phone :</h3>
+        <h2>${this.serverIP}:3000</h2>
+      </div>
     `;
   }
 
@@ -361,8 +395,9 @@ export class LanCam extends LitElement {
 
         <button class="call-camera-button" @click=${this.makeCall}>call</button>
 
+        ${this.isDesktop ? this.renderLaptop() : this.renderMobile()}
         <!-- ${this.renderLaptop()} -->
-        ${this.renderMobile()}
+        <!-- ${this.renderMobile()} -->
       </div>
     `;
   }
@@ -430,6 +465,15 @@ export class LanCam extends LitElement {
         position: absolute;
         z-index: 2;
         left: 0;
+      }
+
+      .show-ip-container {
+        flex-grow: 1;
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        flex-direction: column;
+        background-color: whitesmoke;
       }
     `;
   }
