@@ -16,9 +16,13 @@
     "start": "web-dev-server",
     "server": "NODE_ENV=dev node server/server.js",
     "server:prod": "NODE_ENV=prod node server/server.js",
-    "electron": "NODE_ENV=prod electron ."
+    "electron": "NODE_ENV=prod electron .",
+    "forge:start": "electron-forge start",
+    "forge:package": "electron-forge package",
+    "forge:make": "electron-forge make"
   },
   "dependencies": {
+    "electron-squirrel-startup": "^1.0.0",
     "express": "^4.17.1",
     "lit": "^2.0.2",
     "mkcert": "^1.4.0",
@@ -28,6 +32,11 @@
   "devDependencies": {
     "@babel/preset-env": "^7.15.8",
     "@custom-elements-manifest/analyzer": "^0.4.17",
+    "@electron-forge/cli": "^6.0.0-beta.61",
+    "@electron-forge/maker-deb": "^6.0.0-beta.61",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.61",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.61",
+    "@electron-forge/maker-zip": "^6.0.0-beta.61",
     "@open-wc/building-rollup": "^1.10.0",
     "@open-wc/eslint-config": "^4.3.0",
     "@open-wc/testing": "next",
@@ -71,5 +80,32 @@
       "prettier --write"
     ]
   },
-  "customElements": "custom-elements.json"
+  "customElements": "custom-elements.json",
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "lan_cam"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
+  }
 }
