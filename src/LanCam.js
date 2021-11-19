@@ -1,10 +1,8 @@
 /* eslint-disable class-methods-use-this */
 import { LitElement, html, css } from "lit";
-import "./flip-camera-icon.js";
+import "./my-icon.js";
 
 // const logo = new URL("../assets/open-wc-logo.svg", import.meta.url).href;
-const switchIcon = new URL("../assets/switch-icon.svg", import.meta.url).href;
-const cameraIcon = new URL("../assets/camera-icon.svg", import.meta.url).href;
 
 let ws;
 let pc;
@@ -34,6 +32,7 @@ export class LanCam extends LitElement {
       serverIP: { type: String },
       isInCall: { type: Boolean },
       isDesktop: { type: Boolean },
+      isFullscreen: { type: Boolean },
     };
   }
 
@@ -42,6 +41,7 @@ export class LanCam extends LitElement {
     this.text = "";
     this.isInCall = false;
     this.isDesktop = false;
+    this.isFullscreen = false;
 
     this.checkIfDesktop();
     this.startWS();
@@ -50,6 +50,16 @@ export class LanCam extends LitElement {
   firstUpdated() {
     super.firstUpdated();
     this.getMedia();
+  }
+
+  goFullScreen() {
+    this.isFullscreen = !this.isFullscreen;
+    const el = this;
+    if (this.isFullscreen) {
+      el.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
   }
 
   checkIfDesktop() {
@@ -64,7 +74,7 @@ export class LanCam extends LitElement {
   }
 
   wsGet() {
-    ws.onmessage = event => {
+    ws.onmessage = async event => {
       console.log("event.data:", event.data);
       const parsed = JSON.parse(event.data);
       if (event.data) {
@@ -76,10 +86,10 @@ export class LanCam extends LitElement {
       }
       // we're offered a call and now we answer it :)
       if (parsed.offer) {
-        this.isInCall = true;
-        setTimeout(() => {
-          this.answer(parsed.offer);
-        }, 2000);
+        // this.isInCall = true;
+        // await this.updateComplete;
+        await this.onInCall();
+        this.answer(parsed.offer);
       }
       if (parsed.newIceCandidate) {
         this.addIceCandidate(parsed.newIceCandidate);
@@ -89,13 +99,17 @@ export class LanCam extends LitElement {
         this.serverIP = parsed.ip;
       }
       if (parsed.msg === "MAKE_CALL") {
-        this.isInCall = true;
-        setTimeout(() => {
-          console.log("caaaaaaaaaaaaaaaaaaaaaaaaallll");
-          this.makeCall();
-        }, 2000);
+        // this.isInCall = true;
+        // await this.updateComplete;
+        await this.onInCall();
+        this.makeCall();
       }
     };
+  }
+
+  async onInCall() {
+    this.isInCall = true;
+    await this.updateComplete;
   }
 
   startWS() {
@@ -338,10 +352,6 @@ export class LanCam extends LitElement {
         playsinline
         ?controls=${false}
       ></video>
-
-      <button class="switch-camera-button" @click=${this.switchCamera}>
-        <flip-camera-icon></flip-camera-icon>
-      </button>
     `;
   }
 
@@ -361,9 +371,18 @@ export class LanCam extends LitElement {
     `;
   }
 
+  buttonsClass() {
+    let styles = "buttons-container";
+    if (this.isDesktop && this.isFullscreen) {
+      styles = "icon-hidden buttons-container";
+    }
+
+    return styles;
+  }
+
   render() {
     return html`
-      <div class="background">
+      <div id="background" class="background">
         <!-- <input @input=${this.echo} />
     
         <button @click=${this.echo}>hi</button>
@@ -394,19 +413,38 @@ export class LanCam extends LitElement {
           ?controls=${false}
         ></video> -->
 
-        <button class="call-camera-button" @click=${this.makeCall}>call</button>
-
         ${this.isDesktop ? this.renderLaptop() : this.renderMobile()}
         <!-- ${this.renderLaptop()} -->
         <!-- ${this.renderMobile()} -->
+
+        <div class=${this.buttonsClass()}>
+          <button class="icon-button phone-button" @click=${this.makeCall}>
+            <my-icon class="phone-icon" icon="phone"></my-icon>
+          </button>
+
+          <button
+            class="${this.isDesktop &&
+            "icon-hidden"} icon-button switch-camera-button"
+            @click=${this.switchCamera}
+          >
+            <my-icon icon="flip-camera"></my-icon>
+          </button>
+
+          <button
+            id="fullscreen-button"
+            class="icon-button fullscreen-button"
+            @click=${this.goFullScreen}
+          >
+            <my-icon class="fullscreen-icon" icon="fullscreen"></my-icon>
+          </button>
+        </div>
       </div>
     `;
   }
 
   static get styles() {
     return css`
-      :host {
-        min-height: 100vh;
+      /* :host {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -417,14 +455,17 @@ export class LanCam extends LitElement {
         margin: 0 auto;
         text-align: center;
         background-color: var(--lan-cam-background-color);
-      }
+      } */
 
       .background {
-        position: relative;
+        position: fixed;
         display: flex;
         background-color: black;
         width: 100vw;
-        height: 100vh;
+        /* height: 100vh; */
+        height: 100%;
+        min-height: fill-available;
+        flex-grow: 1;
         justify-content: center;
         align-items: flex-end;
       }
@@ -443,31 +484,6 @@ export class LanCam extends LitElement {
         height: 0;
       }
 
-      .switch-camera-button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 100%;
-        position: absolute;
-        margin-bottom: 1rem;
-        /* right: 1rem; */
-        border: none;
-        cursor: pointer;
-        z-index: 2;
-      }
-      flip-camera-icon {
-        flex-grow: 1;
-        --color: black;
-      }
-
-      .call-camera-button {
-        position: absolute;
-        z-index: 2;
-        left: 0;
-      }
-
       .show-ip-container {
         flex-grow: 1;
         display: flex;
@@ -475,6 +491,34 @@ export class LanCam extends LitElement {
         height: 100vh;
         flex-direction: column;
         background-color: whitesmoke;
+      }
+
+      .buttons-container {
+        position: absolute;
+        flex-grow: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+      .icon-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 2rem;
+        height: 2rem;
+        margin: 1rem;
+        border-radius: 100%;
+        border: none;
+        cursor: pointer;
+        z-index: 2;
+      }
+      .icon-hidden {
+        visibility: hidden;
+      }
+      .icon {
+        flex-grow: 1;
+        --color: black;
       }
     `;
   }
