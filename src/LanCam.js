@@ -366,7 +366,7 @@ export class LanCam extends LitElement {
       ></video>
       <div class="show-ip-container">
         <h3>Open this in chrome on your phone :</h3>
-        <h2>${this.serverIP}:3000</h2>
+        <h2>${this.serverIP}:3333</h2>
       </div>
     `;
   }

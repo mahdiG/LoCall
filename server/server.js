@@ -3,12 +3,14 @@ const WebSocketServer = require("ws").Server;
 
 const express = require("express");
 // const fs = require("fs");
+const http = require("http");
 const https = require("https");
 const path = require("path");
 const { createCert } = require("./mkcert.js");
 const { getLocalIP } = require("./getIP.js");
 
-console.log("localIP: ", getLocalIP());
+const localIP = getLocalIP();
+console.log("localIP: ", localIP);
 
 function createWS(httpsServer) {
   console.log("nodeenv: ", process.env.NODE_ENV);
@@ -28,7 +30,7 @@ function createWS(httpsServer) {
 
     console.log("someone connected?", wss.clients.size);
 
-    ws.send(JSON.stringify({ ip: getLocalIP() }));
+    ws.send(JSON.stringify({ ip: localIP }));
 
     // if (wss.clients.size === 2) {
     //   ws.send(JSON.stringify({ msg: "MAKE_CALL" }));
@@ -95,5 +97,18 @@ async function createServer() {
 
   createWS(httpsServer);
 }
+
+const server = http.createServer((req, res) => {
+  console.log("req: ", req);
+  console.log("res: ", res);
+  res.writeHead(302, { Location: `https://${localIP}:3000` });
+  res.end(
+    JSON.stringify({
+      data: "Hello World!",
+    })
+  );
+});
+
+server.listen(3333);
 
 createServer();
