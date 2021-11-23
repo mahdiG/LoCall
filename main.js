@@ -1,12 +1,11 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
+const { startServers } = require("./server/server.js");
 
 async function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    // width: 800,
-    // height: 600,
     // show: false,
     autoHideMenuBar: true,
     fullscreen: true,
@@ -28,22 +27,11 @@ async function createWindow() {
     }
   );
 
-  // and load the index.html of the app.
-  // mainWindow.loadFile('index.html')
+  await startServers();
+
   const isProd = process.env.NODE_ENV === "prod";
-  // const isProd = false;
   if (app.isPackaged || isProd) {
-    // TODO: make sure it loads and then loadurl
-    const { start } = require("./server/server.js");
-
-    await start();
     mainWindow.loadURL("https://localhost:3000");
-    // setTimeout(() => {
-    // }, 3000);
-
-    // import("./server/server.js").then(() => {
-    //   mainWindow.loadURL("https://localhost:3000");
-    // });
   } else {
     // you have to npm run start and start your dev server
     mainWindow.loadURL("http://localhost:8000");

@@ -1,0 +1,9 @@
+{
+  "extends": [
+    "@open-wc",
+    "prettier"
+  ],
+  "settings": {
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+  }
+}
