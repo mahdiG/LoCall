@@ -373,7 +373,9 @@ export class LanCam extends LitElement {
 
   buttonsClass() {
     let styles = "buttons-container";
-    if (this.isDesktop && this.isFullscreen) {
+    // if (this.isDesktop && this.isFullscreen) {
+    // We go fullscreen in electron instead
+    if (this.isDesktop) {
       styles = "icon-hidden buttons-container";
     }
 
