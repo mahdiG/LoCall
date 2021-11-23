@@ -3,7 +3,7 @@
     "@open-wc",
     "prettier"
   ],
-  "settings": {
+  "rules": {
     "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
   }
 }

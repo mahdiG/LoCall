@@ -295,7 +295,7 @@ export class LanCam extends LitElement {
 
   changeSenderTrack(stream) {
     const videoTrack = stream.getVideoTracks()[0];
-    const sender = pc.getSenders().find(s => s.track.kind == videoTrack.kind);
+    const sender = pc.getSenders().find(s => s.track.kind === videoTrack.kind);
     console.log("found sender:", sender);
     sender.replaceTrack(videoTrack);
   }
@@ -395,39 +395,7 @@ export class LanCam extends LitElement {
   render() {
     return html`
       <div id="background" class="background">
-        <!-- <input @input=${this.echo} />
-    
-        <button @click=${this.echo}>hi</button>
-    
-        <button @click=${this.makeCall}>call!!</button> -->
-
-        <!-- ${this.renderShowIP()} -->
-
-        <!-- <button class="switch-camera-button" @click=${this.switchCamera}>
-          switch
-        </button>
-
-        <button class="call-camera-button" @click=${this.makeCall}>call</button>
-
-        <video
-          id="local-video"
-          class="video video-local"
-          autoplay
-          playsinline
-          ?controls=${false}
-        ></video>
-
-        <video
-          id="remote-video"
-          class="video"
-          autoplay
-          playsinline
-          ?controls=${false}
-        ></video> -->
-
         ${this.isDesktop ? this.renderLaptop() : this.renderMobile()}
-        <!-- ${this.renderLaptop()} -->
-        <!-- ${this.renderMobile()} -->
 
         <div class=${this.buttonsClass()}>
           <button class="icon-button phone-button" @click=${this.makeCall}>

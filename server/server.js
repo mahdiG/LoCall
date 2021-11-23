@@ -15,7 +15,7 @@ console.log("localIP: ", localIP);
 async function createHttpsServer() {
   const cert = await createCert();
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     // console.log("credentials: ");
 
     // const options = {
@@ -62,7 +62,7 @@ async function createHttpsServer() {
 async function createWS() {
   console.log("createws");
   const httpsServer = await createHttpsServer();
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     console.log("nodeenv: ", process.env.NODE_ENV);
 
     const isDev = process.env.NODE_ENV === "dev";
@@ -110,7 +110,7 @@ async function createWS() {
 
 function createHttpServer() {
   console.log("createhttp");
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     const server = http.createServer((req, res) => {
       console.log("req: ", req);
       console.log("res: ", res);
