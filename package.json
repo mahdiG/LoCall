@@ -1,9 +1,9 @@
 {
   "name": "lan-cam",
-  "description": "Webcomponent lan-cam following open-wc recommendations",
+  "description": "Use your phone as a webcam in obs",
   "license": "MIT",
-  "author": "lan-cam",
-  "version": "0.0.0",
+  "author": "Mahdi Gerami",
+  "version": "1",
   "main": "main.js",
   "scripts": {
     "lint": "eslint --ext .js,.html . --ignore-path .gitignore && prettier \"**/*.js\" --check --ignore-path .gitignore",
@@ -19,7 +19,7 @@
     "electron": "NODE_ENV=prod electron .",
     "forge:start": "electron-forge start",
     "forge:package": "electron-forge package",
-    "forge:make": "electron-forge make"
+    "forge:make": "rimraf dist && rollup -c rollup.config.js && npm run analyze -- --exclude dist && electron-forge make"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
