@@ -26,7 +26,6 @@
     "express": "^4.17.1",
     "lit": "^2.0.2",
     "mkcert": "^1.4.0",
-    "websocket": "^1.0.34",
     "ws": "^8.2.3"
   },
   "devDependencies": {
