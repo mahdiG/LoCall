@@ -3,7 +3,7 @@
   "description": "Use your phone as a webcam in obs",
   "license": "MIT",
   "author": "Mahdi Gerami",
-  "version": "1",
+  "version": "1.0.0",
   "main": "main.js",
   "scripts": {
     "lint": "eslint --ext .js,.html . --ignore-path .gitignore && prettier \"**/*.js\" --check --ignore-path .gitignore",
