@@ -2,7 +2,7 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 
-function createWindow() {
+async function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
@@ -28,9 +28,16 @@ function createWindow() {
   // const isProd = false;
   if (app.isPackaged || isProd) {
     // TODO: make sure it loads and then loadurl
-    import("./server/server.js").then(() => {
-      mainWindow.loadURL("https://localhost:3000");
-    });
+    const { start } = require("./server/server.js");
+
+    await start();
+    mainWindow.loadURL("https://localhost:3000");
+    // setTimeout(() => {
+    // }, 3000);
+
+    // import("./server/server.js").then(() => {
+    //   mainWindow.loadURL("https://localhost:3000");
+    // });
   } else {
     // you have to npm run start and start your dev server
     mainWindow.loadURL("http://localhost:8000");

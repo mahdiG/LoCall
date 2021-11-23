@@ -12,103 +12,126 @@ const { getLocalIP } = require("./getIP.js");
 const localIP = getLocalIP();
 console.log("localIP: ", localIP);
 
-function createWS(httpsServer) {
-  console.log("nodeenv: ", process.env.NODE_ENV);
+async function createHttpsServer() {
+  const cert = await createCert();
 
-  const isDev = process.env.NODE_ENV === "dev";
+  return new Promise((resolve, reject) => {
+    // console.log("credentials: ");
 
-  let wss = new WebSocketServer({ port: 8080 });
-  if (!isDev) {
-    wss = new WebSocketServer({ server: httpsServer });
-  }
-  // const wss = new WebSocket({ server: httpsServer });
+    // const options = {
+    //   key: fs.readFileSync("../cert/localhost-key.pem"),
+    //   cert: fs.readFileSync("../cert/localhost.pem"),
+    // };
 
-  // eslint-disable-next-line no-unused-vars
-  wss.on("connection", (ws, req) => {
-    // const ip = req.socket.remoteAddress;
-    // console.log("ip:", ip);
+    const options = {
+      ...cert,
+    };
 
-    console.log("someone connected?", wss.clients.size);
+    const app = express();
+    const port = 3000;
 
-    ws.send(JSON.stringify({ ip: localIP }));
+    // app.listen(port, () => {
+    //   console.log(`Example app listening at http://localhost:${port}`);
+    // });
 
-    // if (wss.clients.size === 2) {
-    //   ws.send(JSON.stringify({ msg: "MAKE_CALL" }));
-    // }
+    // app.enable("trust proxy");
+    // app.use((req, res, next) => {
+    //   console.log("req.secure: ", req.secure);
+    //   req.secure ? next() : res.redirect("https://" + req.headers.host + req.url);
+    // });
 
-    ws.on("message", (data, isBinary) => {
-      console.log("received: %s", data);
+    // app.use(express.static(path.join(__dirname, "dist")));
+    app.use("/", express.static(path.join(__dirname, "../dist")));
+    console.log(path.join(__dirname, "../dist"));
+    app.use("/", express.static("../dist"));
 
-      // send server ip to client
+    // app.get("/", (req, res) => {
+    //   res.send("Hello World!");
+    // });
 
-      wss.clients.forEach(client => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(data, { binary: isBinary });
-        }
-      });
-
-      // ws.send(`echoing: ${data}`);
-      // ws.send(data);
+    const httpsServer = https.createServer(options, app);
+    httpsServer.listen(port, () => {
+      console.log(`Example app listening at https://localhost:${port}`);
+      resolve(httpsServer);
     });
 
-    // ws.send("something");
+    // createWS(httpsServer);
   });
 }
 
-async function createServer() {
-  const cert = await createCert();
-  // console.log("credentials: ");
+async function createWS() {
+  console.log("createws");
+  const httpsServer = await createHttpsServer();
+  return new Promise((resolve, reject) => {
+    console.log("nodeenv: ", process.env.NODE_ENV);
 
-  // const options = {
-  //   key: fs.readFileSync("../cert/localhost-key.pem"),
-  //   cert: fs.readFileSync("../cert/localhost.pem"),
-  // };
+    const isDev = process.env.NODE_ENV === "dev";
 
-  const options = {
-    ...cert,
-  };
+    console.log("isDev: ", isDev);
 
-  const app = express();
-  const port = 3000;
+    let wss = new WebSocketServer({ port: 8080 });
+    if (!isDev) {
+      wss = new WebSocketServer({ server: httpsServer });
+    }
+    resolve();
 
-  // app.listen(port, () => {
-  //   console.log(`Example app listening at http://localhost:${port}`);
-  // });
+    // eslint-disable-next-line no-unused-vars
+    wss.on("connection", (ws, req) => {
+      // const ip = req.socket.remoteAddress;
+      // console.log("ip:", ip);
 
-  // app.enable("trust proxy");
-  // app.use((req, res, next) => {
-  //   console.log("req.secure: ", req.secure);
-  //   req.secure ? next() : res.redirect("https://" + req.headers.host + req.url);
-  // });
+      console.log("someone connected?", wss.clients.size);
 
-  // app.use(express.static(path.join(__dirname, "dist")));
-  app.use("/", express.static(path.join(__dirname, "../dist")));
-  console.log(path.join(__dirname, "../dist"));
-  app.use("/", express.static("../dist"));
+      ws.send(JSON.stringify({ ip: localIP }));
 
-  // app.get("/", (req, res) => {
-  //   res.send("Hello World!");
-  // });
+      // if (wss.clients.size === 2) {
+      //   ws.send(JSON.stringify({ msg: "MAKE_CALL" }));
+      // }
 
-  const httpsServer = https.createServer(options, app);
-  httpsServer.listen(port, () => {
-    console.log(`Example app listening at https://localhost:${port}`);
+      ws.on("message", (data, isBinary) => {
+        console.log("received: %s", data);
+
+        // send server ip to client
+
+        wss.clients.forEach(client => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(data, { binary: isBinary });
+          }
+        });
+
+        // ws.send(`echoing: ${data}`);
+        // ws.send(data);
+      });
+
+      // ws.send("something");
+    });
   });
-
-  createWS(httpsServer);
 }
 
-const server = http.createServer((req, res) => {
-  console.log("req: ", req);
-  console.log("res: ", res);
-  res.writeHead(302, { Location: `https://${localIP}:3000` });
-  res.end(
-    JSON.stringify({
-      data: "Hello World!",
-    })
-  );
-});
+function createHttpServer() {
+  console.log("createhttp");
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      console.log("req: ", req);
+      console.log("res: ", res);
+      res.writeHead(302, { Location: `https://${localIP}:3000` });
+      res.end(
+        JSON.stringify({
+          data: "Hello World!",
+        })
+      );
+    });
 
-server.listen(3333);
+    server.listen(3333, () => resolve("hello"));
+  });
+}
 
-createServer();
+module.exports = {
+  async start() {
+    console.log("START");
+    // const tp = await createHttpServer();
+    // await createHttpServer();
+    // await createWS();
+    return Promise.all([createHttpServer(), createWS()]);
+  },
+};
