@@ -365,8 +365,18 @@ export class LanCam extends LitElement {
         ?controls=${false}
       ></video>
       <div class="show-ip-container">
-        <h3>Open this in chrome on your phone :</h3>
-        <h2>${this.serverIP}:3333</h2>
+        <h3 class="ip-text description">Open this in chrome on your phone :</h3>
+        <h2 class="ip-text">${this.serverIP}:3333</h2>
+
+        <p>
+          THEN, it shows a warning which is not important. Follow the images to
+          skip the warning:
+        </p>
+
+        <div class="warn-img-container">
+          <div class="warn-img warn-img-first"></div>
+          <div class="warn-img warn-img-second"></div>
+        </div>
       </div>
     `;
   }
@@ -486,15 +496,6 @@ export class LanCam extends LitElement {
         height: 0;
       }
 
-      .show-ip-container {
-        flex-grow: 1;
-        display: flex;
-        width: 100vw;
-        height: 100vh;
-        flex-direction: column;
-        background-color: whitesmoke;
-      }
-
       .buttons-container {
         position: absolute;
         flex-grow: 1;
@@ -521,6 +522,41 @@ export class LanCam extends LitElement {
       .icon {
         flex-grow: 1;
         --color: black;
+      }
+
+      .show-ip-container {
+        flex-grow: 1;
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        flex-direction: column;
+        background-color: whitesmoke;
+        align-items: center;
+        justify-content: center;
+      }
+      .ip-text {
+        margin: 1rem 0;
+        margin-top: 1rem;
+      }
+      /* .ip-text.description {
+      } */
+
+      .warn-img-container {
+        display: flex;
+        justify-content: space-evenly;
+        margin-top: 1rem;
+      }
+
+      .warn-img {
+        aspect-ratio: 0.56326530612 / 1;
+        /* width: 414px; */
+        width: 35vh;
+        background-image: url("../assets/warning-1.webp");
+        background-size: cover;
+        margin: 0 2rem;
+      }
+      .warn-img-second {
+        background-image: url("../assets/warning-2.webp");
       }
     `;
   }
