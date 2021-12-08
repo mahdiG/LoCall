@@ -20,21 +20,15 @@ Download executable/installable files from project's github release page
 npm install
 ```
 
-4- build with rollup:
-
-```bash
-npm run build
-```
-
-5- make electron app:
+4- make electron app:
 
 ```bash
 npm run make
 ```
 
-6- this will create a directory named `out` in the project folder which contains the executable/installable files. Install or execute app from there.
+5- this will create a directory named `out` in the project folder which contains the executable/installable files. Install or execute app from there.
 
-7- enjoy!! :)
+6- enjoy!! :)
 
 ## Scripts
 
